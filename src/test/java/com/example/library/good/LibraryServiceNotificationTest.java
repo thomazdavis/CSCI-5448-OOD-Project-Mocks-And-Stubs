@@ -31,7 +31,6 @@ public class LibraryServiceNotificationTest {
 
     @Test
     void testIssueBookWithDueDate_sendsNotification() {
-        // Mock both dependencies
         DataStore mockStore = mock(DataStore.class);
         NotificationService mockNotifier = mock(NotificationService.class);
 
@@ -42,18 +41,14 @@ public class LibraryServiceNotificationTest {
         User user = new User("u1", "Alice", false);
         LocalDate dueDate = LocalDate.now().plusDays(14);
 
-        // Issue book with notification
         boolean result = service.issueBookWithDueDate(user, "notify001", dueDate);
 
-        // Verify book was issued
         assertTrue(result);
         assertFalse(book.isAvailable());
         assertEquals(dueDate, book.getDueDate());
 
-        // CRITICAL: Verify notification was sent
         verify(mockNotifier).notifyBookBorrowed(user, book);
 
-        // Verify store interactions
         verify(mockStore).findBookByIsbn("notify001");
         verify(mockStore).updateBook(book);
     }
@@ -70,13 +65,10 @@ public class LibraryServiceNotificationTest {
         LibraryService service = new LibraryService(mockStore, mockNotifier);
         User user = new User("u1", "Bob", false);
 
-        // Try to issue unavailable book
         boolean result = service.issueBookWithDueDate(user, "notify002", LocalDate.now().plusDays(14));
 
-        // Should fail
         assertFalse(result);
 
-        // CRITICAL: Verify NO notification was sent
         verify(mockNotifier, never()).notifyBookBorrowed(any(), any());
         verify(mockStore, never()).updateBook(any());
     }
@@ -93,10 +85,8 @@ public class LibraryServiceNotificationTest {
         LibraryService service = new LibraryService(mockStore, mockNotifier);
         User user = new User("u1", "Charlie", false);
 
-        // Notify about reservation
         service.notifyReservation(user, "notify003");
 
-        // Verify notification was sent
         verify(mockNotifier).notifyReservationAvailable(user, book);
     }
 
@@ -112,30 +102,24 @@ public class LibraryServiceNotificationTest {
         LibraryService service = new LibraryService(mockStore, mockNotifier);
         User user = new User("u1", "Dana", false);
 
-        // Try to notify about unavailable book
         service.notifyReservation(user, "notify004");
 
-        // Should NOT send notification
         verify(mockNotifier, never()).notifyReservationAvailable(any(), any());
     }
 
     @Test
     void testBackwardCompatibility_serviceWorksWithoutNotifier() {
-        // Using old constructor (no notification service)
         DataStore mockStore = mock(DataStore.class);
         Book book = new Book("compat001", "Backward Compatible");
         when(mockStore.findBookByIsbn("compat001")).thenReturn(Optional.of(book));
 
-        // Old-style service without notifications
         LibraryService service = new LibraryService(mockStore);
         User user = new User("u1", "User", false);
 
-        // Should work without throwing NullPointerException
         boolean result = service.issueBookWithDueDate(user, "compat001", LocalDate.now().plusDays(7));
 
         assertTrue(result);
         assertFalse(book.isAvailable());
-        // No notification service, so no notification sent (and that's OK)
     }
 
     @Test
@@ -153,14 +137,11 @@ public class LibraryServiceNotificationTest {
         User user = new User("u1", "User", false);
         LocalDate dueDate = LocalDate.now().plusDays(14);
 
-        // Issue two books
         service.issueBookWithDueDate(user, "order001", dueDate);
         service.issueBookWithDueDate(user, "order002", dueDate);
 
-        // Verify both notifications were sent
         verify(mockNotifier, times(2)).notifyBookBorrowed(eq(user), any(Book.class));
 
-        // Verify in order
         var inOrder = inOrder(mockNotifier);
         inOrder.verify(mockNotifier).notifyBookBorrowed(user, book1);
         inOrder.verify(mockNotifier).notifyBookBorrowed(user, book2);
@@ -168,8 +149,6 @@ public class LibraryServiceNotificationTest {
 
     @Test
     void testMocking_preventsRealEmailSending() {
-        // This test demonstrates the KEY benefit of mocking:
-        // We can test notification logic WITHOUT actually sending emails
 
         DataStore mockStore = mock(DataStore.class);
         NotificationService mockNotifier = mock(NotificationService.class);
@@ -181,19 +160,6 @@ public class LibraryServiceNotificationTest {
         User user = new User("u1", "Test User", false);
 
         service.issueBookWithDueDate(user, "mock001", LocalDate.now().plusDays(14));
-
-        // If we used a REAL EmailNotificationService here:
-        // - It would try to connect to an email server
-        // - It would actually send an email
-        // - Test would be slow and require network
-        // - Could fail due to network issues
-        // - Would spam real inboxes during testing!
-
-        // With a mock:
-        // - No real email sent
-        // - Test runs instantly
-        // - No external dependencies
-        // - We still verify the logic is correct
 
         verify(mockNotifier).notifyBookBorrowed(user, book);
     }

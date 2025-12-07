@@ -33,7 +33,6 @@ public class LibraryAppTest {
         LibraryApp.availability.clear();
         LibraryApp.borrowers.clear();
 
-        // Setup test data
         LibraryApp.books.add("Book A");
         LibraryApp.books.add("Book B");
         LibraryApp.availability.put("Book A", true);
@@ -47,7 +46,6 @@ public class LibraryAppTest {
 
     @AfterEach
     void tearDown() {
-        // Restore original streams
         System.setOut(originalOut);
         System.setIn(originalIn);
 
@@ -55,7 +53,6 @@ public class LibraryAppTest {
         try {
             Files.deleteIfExists(Paths.get("library_report.txt"));
         } catch (IOException e) {
-            // Cleanup failed
         }
     }
 
@@ -68,7 +65,6 @@ public class LibraryAppTest {
 
         LibraryApp.addBook();
 
-        // Assertions work, but setup is complicated
         assertTrue(LibraryApp.books.contains("New Book"));
         assertTrue(LibraryApp.availability.get("New Book"));
         assertTrue(outputStream.toString().contains("Book added!"));
@@ -98,7 +94,6 @@ public class LibraryAppTest {
 
         LibraryApp.borrowBook();
 
-        // Book remains unavailable
         assertFalse(LibraryApp.availability.get("Book A"));
         assertTrue(outputStream.toString().contains("Book not available!"));
     }
@@ -153,11 +148,9 @@ public class LibraryAppTest {
 
         LibraryApp.generateReport();
 
-        // Verify file was created
         File reportFile = new File("library_report.txt");
         assertTrue(reportFile.exists(), "Report file should be created");
 
-        // Read and verify contents
         String content = new String(Files.readAllBytes(Paths.get("library_report.txt")));
         assertTrue(content.contains("Library Report"));
         assertTrue(content.contains("Total books: 3")); // 2 from setUp + 1 added
@@ -176,7 +169,6 @@ public class LibraryAppTest {
 
     @Test
     void testCalculateStatistics() {
-        // Set up some borrowed books
         LibraryApp.availability.put("Book A", false);
 
         LibraryApp.calculateStatistics();
@@ -192,8 +184,6 @@ public class LibraryAppTest {
 
     @Test
     void testIsBookAvailable() {
-        // This is the EASIEST method to test because it has no I/O
-        // But it still accesses global state
         assertTrue(LibraryApp.isBookAvailable("Book A"));
 
         LibraryApp.availability.put("Book A", false);
@@ -205,7 +195,6 @@ public class LibraryAppTest {
     @Test
     void testStaticStateInterference() {
         // PROBLEM 9: Tests can interfere with each other if setUp fails
-        // Add a book
         LibraryApp.books.add("Interference Test");
         LibraryApp.availability.put("Interference Test", true);
 

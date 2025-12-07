@@ -106,7 +106,6 @@ public class LibraryApp {
 
         double borrowRate = total > 0 ? (borrowed * 100.0 / total) : 0;
 
-        // Logic and presentation mixed together
         System.out.println("=== Library Statistics ===");
         System.out.println("Total Books: " + total);
         System.out.println("Currently Borrowed: " + borrowed);
